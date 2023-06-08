@@ -53,3 +53,9 @@ th, td {
 th {
     background-color: #f2f2f2;
 }
+
+@media screen and (max-width: 600px) {
+    form, table {
+        max-width: 100%;
+    }
+}

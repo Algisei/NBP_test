@@ -12,15 +12,15 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Создаем экземпляр класса Database и устанавливаем соединение с базой данных
+// new Database + connection to db
 $database = new Database($databaseHost, $databaseName, $databaseUsername, $databasePassword);
 $database->connect();
 
-// Создаем экземпляр класса NBPApi и получаем валютные курсы через API
+// new NBPApi and get currency rates thru API
 $nbpApi = new NBPApi('https://api.nbp.pl/api');
 $currencyRates = $nbpApi->getCurrencyRates();
 
-// Создаем экземпляр класса CurrencyRateDAO и сохраняем валютные курсы в базу данных
+// new CurrencyRateDAO and save rates to db
 $currencyRateRepository = new CurrencyRateRepository($database);
 
 foreach ($currencyRates as $currencyRateData) {
@@ -34,54 +34,67 @@ foreach ($currencyRates as $currencyRateData) {
     $currencyRateRepository->saveCurrencyRate($currencyRate);
 }
 
-// Создаем экземпляр класса CurrencyConversionResultRepository
+// new CurrencyConversionResultRepository
 $conversionResultRepository = new CurrencyConversionResultRepository($database);
 
-// Обработка запроса на конвертацию валюты
+// Processing a currency conversion request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $amount = $_POST['amount'];
     $sourceCurrency = $_POST['source_currency'];
     $targetCurrency = $_POST['target_currency'];
 
-    // Создаем экземпляр класса CurrencyConverter и выполняем конвертацию валюты
+    // new CurrencyConverter and do the convertsion
     $currencyConverter = new CurrencyConverter($database);
     $convertedAmount = $currencyConverter->convertCurrency($amount, $sourceCurrency, $targetCurrency);
 
-    // Создаем экземпляр класса CurrencyConversionResult и сохраняем результат конвертации в базу данных
+    // new CurrencyConversionResult and save conversion result to db
     $conversionResult = new CurrencyConversionResult($sourceCurrency, $targetCurrency, $amount, $convertedAmount);
     $conversionResultRepository->saveConversionResult($conversionResult);
 }
 
-// Получаем последние 10 результатов конвертации из базы данных
+// Get 10 last results
 $conversionResults = $conversionResultRepository->getConversionResults(10);
 
-// Формируем варианты выбора для списка валют
+// List of currencies
 $currencies = array_column($currencyRates, 'code');
 ?>
 
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Currency Converter</title>
     <link rel="stylesheet" type="text/css" href="style.css">
+     <script>
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+    </script>
 </head>
+
 <body>
     <h1>Currency Converter</h1>
-    
+
+    <?php
+    // Get unique currency codes
+    $currencies = array_unique(array_column($currencyRates, 'code'));
+    sort($currencies); // Alphabetical sorting
+    ?>
+
     <form method="POST" action="">
         <label for="amount">Amount:</label>
         <input type="number" id="amount" name="amount" required min="0" step="0.01">
 
-        <label for="target_currency">Currency from:</label>
-        <select id="target_currency" name="target_currency" required>
-            <?php foreach ($currencies as $currency): ?>
+        <label for="source_currency">Currency from:</label>
+        <select id="source_currency" name="source_currency" required>
+            <?php foreach ($currencies as $currency) : ?>
                 <option value="<?php echo $currency; ?>"><?php echo $currency; ?></option>
             <?php endforeach; ?>
         </select><br><br>
 
-        <label for="source_currency">Currency to:</label>
-        <select id="source_currency" name="source_currency" required>
-            <?php foreach ($currencies as $currency): ?>
+        <label for="target_currency">Currency to:</label>
+        <select id="target_currency" name="target_currency" required>
+            <?php foreach ($currencies as $currency) : ?>
                 <option value="<?php echo $currency; ?>"><?php echo $currency; ?></option>
             <?php endforeach; ?>
         </select><br><br>
@@ -98,16 +111,15 @@ $currencies = array_column($currencyRates, 'code');
             <th>Result amount</th>
             <th>Date</th>
         </tr>
-      <?php foreach ($conversionResults as $result): ?>
-        <tr>
-        <td><?php echo $result->getSourceCurrency(); ?></td>
-        <td><?php echo $result->getTargetCurrency(); ?></td>
-        <td><?php echo $result->getAmount(); ?></td>
-        <td><?php echo $result->getConvertedAmount(); ?></td>
-        <td><?php echo $result->getCreatedAt(); ?></td>
-        </tr>
-      <?php endforeach; ?>
-
+        <?php foreach ($conversionResults as $result) : ?>
+            <tr>
+                <td><?php echo $result->getSourceCurrency(); ?></td>
+                <td><?php echo $result->getTargetCurrency(); ?></td>
+                <td><?php echo $result->getAmount(); ?></td>
+                <td><?php echo $result->getConvertedAmount(); ?></td>
+                <td><?php echo $result->getCreatedAt(); ?></td>
+            </tr>
+        <?php endforeach; ?>
     </table>
 
     <h2>Currency Rates:</h2>
@@ -118,7 +130,7 @@ $currencies = array_column($currencyRates, 'code');
             <th>Rate</th>
             <!--<th>Last Updated</th>-->
         </tr>
-        <?php foreach ($currencyRates as $currencyRateData): ?>
+        <?php foreach ($currencyRates as $currencyRateData) : ?>
             <tr>
                 <td><?php echo $currencyRateData['currency']; ?></td>
                 <td><?php echo $currencyRateData['code']; ?></td>
@@ -130,4 +142,6 @@ $currencies = array_column($currencyRates, 'code');
         <?php endforeach; ?>
     </table>
 </body>
+
 </html>
+

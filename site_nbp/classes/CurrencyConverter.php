@@ -7,7 +7,7 @@ class CurrencyConverter {
     }
 
     public function convertCurrency($amount, $sourceCurrency, $targetCurrency) {
-        // Получение курсов валют из базы данных
+        // get currency rates from db
         $query = "SELECT rate FROM currency_rates WHERE currency_code = ? ORDER BY date DESC LIMIT 1";
         $stmt = $this->database->executeQuery($query, [$sourceCurrency]);
         $sourceRate = $stmt->fetchColumn();
@@ -15,8 +15,8 @@ class CurrencyConverter {
         $stmt = $this->database->executeQuery($query, [$targetCurrency]);
         $targetRate = $stmt->fetchColumn();
 
-        // Конвертация суммы
-        $convertedAmount = ($amount / $sourceRate) * $targetRate;
+        // Convert the amount
+        $convertedAmount = ($amount / $targetRate) * $sourceRate;
 
         return $convertedAmount;
     }

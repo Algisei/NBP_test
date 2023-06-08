@@ -14,7 +14,7 @@ class CurrencyRate {
         $this->updated_at = $updated_at;
     }
 
-    // Геттеры и сеттеры для свойств
+    // getter/setter for properties
 
     public function getCurrency() {
         return $this->currency;

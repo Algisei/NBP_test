@@ -14,7 +14,7 @@
         $this->convertedAmount = $convertedAmount;
     }
 
-    // Геттеры и сеттеры для свойств
+    // getter/setter for properties
 
     public function getSourceCurrency() {
         return $this->sourceCurrency;

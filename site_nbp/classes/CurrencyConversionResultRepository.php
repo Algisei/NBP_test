@@ -7,7 +7,7 @@ class CurrencyConversionResultRepository {
     }
 
     public function saveConversionResult($conversionResult) {
-        $query = "INSERT INTO conversion_results (source_currency, target_currency, amount, converted_amount, created_at, updated_at)
+        $query = "INSERT INTO conversion_results (source_currency, target_currency, converted_amount, amount, created_at, updated_at)
                   VALUES (?, ?, ?, ?, NOW(), NOW())";
         $params = [
             $conversionResult->getSourceCurrency(),
@@ -29,11 +29,12 @@ class CurrencyConversionResultRepository {
         $result = new CurrencyConversionResult(
             $row['source_currency'],
             $row['target_currency'],
-            $row['amount'],
-            $row['converted_amount']
+            $row['converted_amount'],
+            $row['amount']
+            
         );
         $result->setCreatedAt($row['created_at']);
-        $result->setUpdatedAt($row['updated_at']); // Используйте метод setUpdatedAt
+        $result->setUpdatedAt($row['updated_at']);
         $results[] = $result;
     }
 
